@@ -1,0 +1,14 @@
+{
+  "name": "sparrow-media-os",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Sparrow Media Group - Unified Media Operating System",
+  "scripts": {
+    "dev:web": "pnpm --filter @sparrow/web dev",
+    "build:web": "pnpm --filter @sparrow/web build",
+    "lint": "pnpm -r lint"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0"
+  }
+}

@@ -1,0 +1,34 @@
+# Node
+node_modules/
+.next/
+out/
+build/
+dist/
+*.tsbuildinfo
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.venv/
+
+# Logs & Environment
+*.log
+.env
+.env.local
+.env.*.local
+
+# Database & Runtime Data
+*.sqlite3
+*.db
+backend/media/
+media/
+
+# OS
+.DS_Store
+Thumbs.db

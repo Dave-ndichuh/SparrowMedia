@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  sparrow-db:
+    image: pgvector/pgvector:pg16
+    container_name: sparrow-pgvector
+    environment:
+      POSTGRES_DB: sparrow_os
+      POSTGRES_USER: sparrow_admin
+      POSTGRES_PASSWORD: sparrow_secret_dev
+    ports:
+      - "5432:5432"
+    volumes:
+      - sparrow_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sparrow_admin -d sparrow_os"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  sparrow_pgdata:
+    driver: local
