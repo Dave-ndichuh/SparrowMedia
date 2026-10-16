@@ -135,7 +135,7 @@ def analyze_asset_with_gemini(
 
         # Multimodal scene understanding
         response = client.models.generate_content(
-            model="gemini-2.5-flash",
+            model="gemini-3.8-flash",
             contents=contents,
             config=types.GenerateContentConfig(
                 response_mime_type="application/json",
@@ -146,12 +146,15 @@ def analyze_asset_with_gemini(
         dense_desc = raw_json.get("description", f"Media asset {title}")
         tags = raw_json.get("tags", [file_type, "sparrow_media"])
 
-        # Generate text embedding with text-embedding-004 (768 dimensions)
-        embed_resp = client.models.embed_content(
-            model="text-embedding-004",
-            contents=dense_desc,
-        )
-        embedding = embed_resp.embedding.values
+        # Generate text embedding (768 dimensions)
+        try:
+            embed_resp = client.models.embed_content(
+                model="text-embedding-004",
+                contents=dense_desc,
+            )
+            embedding = embed_resp.embedding.values
+        except Exception:
+            embedding = get_synthetic_embedding(dense_desc, dim=768)
 
         return {
             "description": dense_desc,
@@ -160,7 +163,7 @@ def analyze_asset_with_gemini(
                 "mood": raw_json.get("mood", "neutral"),
                 "lighting": raw_json.get("lighting", "natural"),
                 "colors": raw_json.get("colors", "standard"),
-                "ai_engine": "gemini-2.5-flash",
+                "ai_engine": "gemini-3.8-flash",
             },
             "embedding": embedding,
         }

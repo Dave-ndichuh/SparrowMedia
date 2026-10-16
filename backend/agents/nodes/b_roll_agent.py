@@ -16,12 +16,17 @@ def find_best_b_roll_asset(query: str) -> MediaAsset | None:
     query_vector = embed_search_query(query)
 
     if HAS_PGVECTOR:
-        from pgvector.django import CosineDistance
-        qs = MediaAsset.objects.exclude(embedding__isnull=True)
-        ranked = qs.annotate(distance=CosineDistance("embedding", query_vector)).order_by("distance")
-        return ranked.first()
-    else:
-        # Cosine similarity calculation across assets
+        try:
+            from pgvector.django import CosineDistance
+            qs = MediaAsset.objects.exclude(embedding__isnull=True)
+            ranked = qs.annotate(distance=CosineDistance("embedding", query_vector)).order_by("distance")
+            match = ranked.first()
+            if match is not None:
+                return match
+        except Exception as ex:
+            logger.warning(f"Native pgvector query failed ({ex}); falling back to in-memory cosine similarity.")
+
+    # Cosine similarity calculation across assets
         assets = list(MediaAsset.objects.all())
         if not assets:
             return None

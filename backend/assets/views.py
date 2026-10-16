@@ -138,23 +138,29 @@ class AssetSearchView(APIView):
 
         results = []
 
+        used_pgvector = False
         if HAS_PGVECTOR:
-            from pgvector.django import CosineDistance
-            qs = MediaAsset.objects.exclude(embedding__isnull=True)
-            if file_type and file_type != "all":
-                qs = qs.filter(file_type=file_type)
+            try:
+                from pgvector.django import CosineDistance
+                qs = MediaAsset.objects.exclude(embedding__isnull=True)
+                if file_type and file_type != "all":
+                    qs = qs.filter(file_type=file_type)
 
-            # CosineDistance: 0 = identical, 2 = opposite
-            ranked = qs.annotate(distance=CosineDistance("embedding", query_vector)).order_by("distance")[:limit]
+                # CosineDistance: 0 = identical, 2 = opposite
+                ranked = list(qs.annotate(distance=CosineDistance("embedding", query_vector)).order_by("distance")[:limit])
 
-            for item in ranked:
-                data = MediaAssetSerializer(item, context={"request": request}).data
-                # Convert distance to similarity percentage
-                sim = max(0.0, min(1.0, 1.0 - (item.distance if hasattr(item, "distance") else 0.5)))
-                data["similarity_score"] = round(sim * 100, 1)
-                results.append(data)
-        else:
-            # High-performance NumPy Cosine fallback for SQLite/local mode
+                for item in ranked:
+                    data = MediaAssetSerializer(item, context={"request": request}).data
+                    # Convert distance to similarity percentage
+                    sim = max(0.0, min(1.0, 1.0 - (item.distance if hasattr(item, "distance") else 0.5)))
+                    data["similarity_score"] = round(sim * 100, 1)
+                    results.append(data)
+                used_pgvector = True
+            except Exception as ex:
+                logger.warning(f"Native pgvector search failed ({ex}); using in-memory cosine fallback.")
+
+        if not used_pgvector:
+            # High-performance NumPy Cosine fallback for SQLite/local mode or when pgvector extension is absent
             qs = MediaAsset.objects.all()
             if file_type and file_type != "all":
                 qs = qs.filter(file_type=file_type)
