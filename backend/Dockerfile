@@ -20,7 +20,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . /app/
 
 RUN python manage.py collectstatic --noinput
+RUN chmod +x /app/entrypoint.sh
 
 EXPOSE 8000
 
-CMD ["gunicorn", "sparrow_backend.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "3"]
+ENTRYPOINT ["/app/entrypoint.sh"]

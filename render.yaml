@@ -1,3 +1,10 @@
+databases:
+  - name: sparrow-db
+    databaseName: sparrow_os
+    user: sparrow_admin
+    plan: free
+    region: ohio
+
 services:
   - type: web
     name: sparrow-backend
@@ -5,7 +12,7 @@ services:
     dockerfilePath: backend/Dockerfile
     dockerContext: backend
     plan: free
-    region: frankfurt
+    region: ohio
     envVars:
       - key: DJANGO_DEBUG
         value: "False"
@@ -14,14 +21,24 @@ services:
       - key: USE_POSTGRES
         value: "true"
       - key: POSTGRES_HOST
-        sync: false
+        fromDatabase:
+          name: sparrow-db
+          property: host
       - key: POSTGRES_PORT
-        value: "5432"
+        fromDatabase:
+          name: sparrow-db
+          property: port
       - key: POSTGRES_DB
-        sync: false
+        fromDatabase:
+          name: sparrow-db
+          property: database
       - key: POSTGRES_USER
-        sync: false
+        fromDatabase:
+          name: sparrow-db
+          property: user
       - key: POSTGRES_PASSWORD
-        sync: false
+        fromDatabase:
+          name: sparrow-db
+          property: password
       - key: GEMINI_API_KEY
         sync: false
