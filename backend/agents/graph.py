@@ -6,7 +6,11 @@ and conflict resolution into a production-grade automated NLE editing pipeline.
 
 import logging
 from typing import Dict, Any, Literal
-from langgraph.graph import StateGraph, END
+try:
+    from langgraph.graph import StateGraph, END
+    HAS_LANGGRAPH = True
+except ImportError:
+    HAS_LANGGRAPH = False
 
 from agents.state import EditorState
 from agents.nodes.transcription_node import transcription_node
@@ -35,6 +39,10 @@ def supervisor_router(state: EditorState) -> Literal["trim_only", "broll_only", 
 
 def build_editor_graph():
     """Builds and compiles the multi-agent LangGraph workflow."""
+    if not HAS_LANGGRAPH:
+        logger.warning("langgraph package not found; using direct sequential pipeline fallback.")
+        return None
+
     workflow = StateGraph(EditorState)
 
     # Register Nodes
@@ -78,7 +86,7 @@ def run_editor_pipeline(
 ) -> Dict[str, Any]:
     """
     Entry point invoked by Django API view.
-    Runs LangGraph workflow and returns mutated EDL with detailed execution logs.
+    Runs LangGraph workflow (or sequential pipeline fallback) and returns mutated EDL with detailed execution logs.
     """
     initial_state: EditorState = {
         "current_edl": current_edl,
@@ -98,7 +106,19 @@ def run_editor_pipeline(
     }
 
     try:
-        final_state = editor_graph.invoke(initial_state)
+        if editor_graph is not None:
+            final_state = editor_graph.invoke(initial_state)
+        else:
+            # Resilient sequential execution without langgraph package
+            state = transcription_node(initial_state)
+            route = supervisor_router(state)
+            state["routing_decision"] = route
+            if route in ("trim_only", "both"):
+                state = trimmer_agent(state)
+            if route in ("broll_only", "both"):
+                state = b_roll_agent(state)
+            final_state = conflict_resolution_node(state)
+
         return {
             "success": True,
             "edl": final_state["current_edl"],
