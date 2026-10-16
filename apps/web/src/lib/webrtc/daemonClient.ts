@@ -1,6 +1,6 @@
 import { DeviceProfile, DaemonStatus } from "@sparrow/edl";
 
-export const DEFAULT_DAEMON_URL = "http://127.0.0.1:8765";
+export const DEFAULT_DAEMON_URL = process.env.NEXT_PUBLIC_DAEMON_URL || "http://127.0.0.1:8765";
 
 export interface DaemonConnectionOptions {
   videoDeviceIndex: number;
