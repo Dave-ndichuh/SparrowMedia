@@ -8,3 +8,5 @@ numpy>=1.26.0
 google-genai>=0.1.0
 opencv-python>=4.8.0
 python-dotenv>=1.0.0
+gunicorn>=22.0.0
+whitenoise>=6.6.0
